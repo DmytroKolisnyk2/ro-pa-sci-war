@@ -14,8 +14,5 @@ CREATE TABLE "Room" (
     CONSTRAINT "Room_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
-
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_createdRoomId_fkey" FOREIGN KEY ("createdRoomId") REFERENCES "Room"("id") ON DELETE SET NULL ON UPDATE CASCADE;

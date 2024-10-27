@@ -9,7 +9,7 @@ generator client {
 
 model User {
   id             Int      @id @default(autoincrement())
-  username       String   @unique
+  username       String   
   createdRoom    Room?    @relation(fields: [createdRoomId], references: [id])
   createdRoomId  Int?
 }
