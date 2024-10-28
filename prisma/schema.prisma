@@ -17,5 +17,16 @@ model User {
 model Room {
   id             Int      @id @default(autoincrement())
   slug           String   @unique
+
   users   User[]
 }
+
+// model Score {
+//   id             Int      @id @default(autoincrement())
+//   user           User     @relation(fields: [userId], references: [id])
+//   userId         Int
+//   room           Room     @relation(fields: [roomId], references: [id])
+//   roomId         Int
+//   score          Int
+//   createdAt      DateTime @default(now())
+// }

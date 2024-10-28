@@ -7,6 +7,7 @@ import { UserModule } from 'src/user/user.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
+  exports: [RoomService],
   providers: [RoomService, RoomRepository],
   controllers: [RoomController],
   imports: [AuthModule, UserModule, PrismaModule],

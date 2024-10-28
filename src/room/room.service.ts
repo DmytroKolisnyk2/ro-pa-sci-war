@@ -22,19 +22,20 @@ export class RoomService {
     return createdRoom;
   }
 
-  public async getRoom(id: number): Promise<Room> {
-    return this.roomRepository.getRoom(id);
+  public async getRoomBySlug(slug: string): Promise<Room> {
+    return this.roomRepository.getRoomBySlag(slug);
   }
 
-  public async addUserToRoom(userId: number, roomId: number): Promise<Room> {
-    return this.roomRepository.addUserToRoom(userId, roomId);
+  public async addUserToRoom(slug: string, userId: number): Promise<Room> {
+    return this.roomRepository.addUserToRoom(slug, userId);
   }
 
-  public async removeUserFromRoom(
-    userId: number,
-    roomId: number,
-  ): Promise<Room> {
-    return this.roomRepository.removeUserFromRoom(userId, roomId);
+  public async getRoomUsersCount(slug: string): Promise<number> { 
+    return this.roomRepository.getRoomUsersCount(slug);
+  }
+
+  public async removeUserFromRoom(slug: string, userId: number): Promise<Room> {
+    return this.roomRepository.removeUserFromRoom(slug, userId);
   }
 
   public async getUserRoom(userId: number): Promise<Room> {
@@ -44,6 +45,10 @@ export class RoomService {
       throw new HttpException('User has no room', 400);
     }
 
-    return this.roomRepository.getRoom(user.createdRoomId);
+    return this.roomRepository.getRoomById(user.createdRoomId);
+  }
+
+  public async isUserInRoom(slug: string, userId: number): Promise<boolean> {
+    return await this.roomRepository.isUserInRoom(slug, userId);
   }
 }

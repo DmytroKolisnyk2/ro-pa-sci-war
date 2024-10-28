@@ -9,27 +9,27 @@ export class RoomRepository {
 
   public async createRoom(): Promise<Room> {
     const slug = uuid();
-    const createdRoom = await this.prisma.room.create({
+    const createdRoom = this.prisma.room.create({
       data: { slug },
     });
 
     return createdRoom;
   }
 
-  public async getRoom(id: number): Promise<Room> {
-    const room = await this.prisma.room.findUnique({
+  public async getRoomBySlag(slug: string): Promise<Room> {
+    const room = this.prisma.room.findUnique({
       where: {
-        id: id,
+        slug,
       },
     });
 
     return room;
   }
 
-  public async addUserToRoom(userId: number, roomId: number): Promise<Room> {
-    const room = await this.prisma.room.update({
+  public async addUserToRoom(slug: string, userId: number): Promise<Room> {
+    const room = this.prisma.room.update({
       where: {
-        id: roomId,
+        slug,
       },
       data: {
         users: {
@@ -43,13 +43,18 @@ export class RoomRepository {
     return room;
   }
 
-  public async removeUserFromRoom(
-    userId: number,
-    roomId: number,
-  ): Promise<Room> {
-    const room = await this.prisma.room.update({
+  public async getRoomById(id: number): Promise<Room> {
+    return this.prisma.room.findUnique({
       where: {
-        id: roomId,
+        id,
+      },
+    });
+  }
+
+  public async removeUserFromRoom(slug: string, userId: number): Promise<Room> {
+    const room = this.prisma.room.update({
+      where: {
+        slug,
       },
       data: {
         users: {
@@ -61,5 +66,39 @@ export class RoomRepository {
     });
 
     return room;
+  }
+
+  public async isUserInRoom(slug: string, userId: number): Promise<boolean> {
+    const room = await this.prisma.room.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        users: {
+          where: {
+            id: userId,
+          },
+        },
+      },
+    });
+
+    if (room.users.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public async getRoomUsersCount(slug: string): Promise<number> {
+    const room = await this.prisma.room.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        users: true,
+      },
+    });
+
+    return room.users.length;
   }
 }
