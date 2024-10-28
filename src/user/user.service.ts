@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+// user.service.ts
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { UserRepository } from './user.repository';
 
@@ -11,27 +17,33 @@ export class UserService {
   }
 
   public async getUser(id: number): Promise<User> {
-    return this.userRepository.getUser(id);
+    const user = await this.userRepository.getUser(id);
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found.`);
+    }
+
+    return user;
   }
 
   public async isRoomAlreadyCreatedByUser(userId: number): Promise<boolean> {
-    const user = await this.userRepository.getUser(userId);
+    const user = await this.getUser(userId);
 
-    if (user.createdRoomId) {
-      return true;
-    }
-
-    return false;
+    return !!user.createdRoomId;
   }
 
   public async setUserCreatedRoom(
     userId: number,
     roomId: number,
   ): Promise<User> {
+    await this.getUser(userId);
+
     return this.userRepository.setUserCreatedRoom(userId, roomId);
   }
 
   public async clearUserCreatedRoom(userId: number): Promise<User> {
+    await this.getUser(userId);
+
     return this.userRepository.clearUserCreatedRoom(userId);
   }
 }

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Room } from '@prisma/client';
+import { GameResult, Room } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
+import { RoomGameResult } from './room.types';
 
 @Injectable()
 export class RoomRepository {
@@ -82,7 +83,7 @@ export class RoomRepository {
       },
     });
 
-    if (room.users.length > 0) {
+    if (room?.users && room.users.length > 0) {
       return true;
     }
 
@@ -100,5 +101,35 @@ export class RoomRepository {
     });
 
     return room.users.length;
+  }
+
+  public async saveToRoomGameResult(
+    slug: string,
+    result: RoomGameResult,
+  ): Promise<Room> {
+    const room = this.prisma.room.update({
+      where: {
+        slug,
+      },
+      data: {
+        gameResults: {
+          create: result,
+        },
+      },
+    });
+
+    return room;
+  }
+
+  public async getRoomDetailedInfo(slug: string): Promise<Room> {
+    return this.prisma.room.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        users: true,
+        gameResults: true,
+      },
+    });
   }
 }

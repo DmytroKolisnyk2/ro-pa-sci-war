@@ -16,7 +16,7 @@ export class GameRepository {
     choice: GameSign,
   ): Promise<void> {
     const key = this.getGameKey(roomId);
-    const results = await this.redis.hset(key, userId.toString(), choice);
+    await this.redis.hset(key, userId.toString(), choice);
   }
 
   async getChoices(roomId: string) {
@@ -37,8 +37,8 @@ export class GameRepository {
     await this.redis.del(key);
   }
 
-  async resetUserChoices(roomId: string, userId: string): Promise<void> {
+  async resetUserChoices(roomId: string, userId: number): Promise<void> {
     const key = this.getGameKey(roomId);
-    await this.redis.hdel(key, userId);
+    await this.redis.hdel(key, userId.toString());
   }
 }

@@ -5,3 +5,14 @@ export class LoginDto {
   @Length(3, 20)
   username: string;
 }
+
+export class LoginResponseDto {
+  token: string;
+}
+
+export class JwtPayloadDto {
+  id: number;
+  username: string;
+  ait: number;
+  exp: number;
+}

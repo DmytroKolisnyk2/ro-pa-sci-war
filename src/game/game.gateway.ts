@@ -1,67 +1,100 @@
-import { Request, UseGuards } from '@nestjs/common';
+import {
+  UseGuards,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  UseFilters,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
   OnGatewayInit,
+  OnGatewayDisconnect,
+  BaseWsExceptionFilter,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { GameService } from './game.service';
-import { GameSign } from './game.types';
 import { RoomMemberGuard } from './game.guard';
+import { GetStatusDto, JoinRoomDto, MakeChoiceDto } from './game.dto';
+import { AllWsExceptionsFilter } from './game.filter';
 
+@UsePipes(ValidationPipe)
+@UseFilters(AllWsExceptionsFilter)
 @WebSocketGateway({})
 @UseGuards(AuthGuard)
-export class GameGateway implements OnGatewayInit {
+export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
+  private readonly logger = new Logger(GameGateway.name);
+
   constructor(private readonly gameService: GameService) {}
 
   afterInit() {
-    console.log('Gateway initialized');
+    this.logger.log('Gateway initialized');
   }
 
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
-    @MessageBody() data: { roomSlug: string },
+    @MessageBody() data: JoinRoomDto,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.gameService.addPlayerToRoom(data.roomSlug, client.user.id);
-
-    await client.join(data.roomSlug);
-    console.log({
-      userId: client.user.id,
-      username: client.user.username,
-    });
-
-    client.to(data.roomSlug).emit('userJoined', {
-      userId: client.user.id,
-      username: client.user.username,
-    });
+    try {
+      await this.gameService.addPlayerToRoom(data.roomSlug, client.user.id);
+      await client.join(data.roomSlug);
+      client.to(data.roomSlug).emit('userJoined', {
+        userId: client.user.id,
+        username: client.user.username,
+      });
+    } catch (error) {
+      throw new BadRequestException('Failed to join room');
+    }
   }
 
   @UseGuards(RoomMemberGuard)
   @SubscribeMessage('makeChoice')
   async handleMakeChoice(
-    @MessageBody() data: { roomSlug: string; choice: GameSign },
+    @MessageBody() data: MakeChoiceDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const gameStatus = await this.gameService.handlePlayerChoice(
-      data.roomSlug,
-      client.user.id,
-      data.choice,
-    );
-
-    client.to(data.roomSlug).emit('gameStatus', gameStatus);
+    try {
+      const gameStatus = await this.gameService.handlePlayerChoice(
+        data.roomSlug,
+        client.user.id,
+        data.choice,
+      );
+      client.to(data.roomSlug).emit('gameStatus', gameStatus);
+    } catch (error) {
+      throw new NotFoundException('Room not found or invalid choice');
+    }
   }
 
   @UseGuards(RoomMemberGuard)
   @SubscribeMessage('getStatus')
   async handleGetStatus(
-    @MessageBody() data: { roomSlug: string },
+    @MessageBody() data: GetStatusDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const status = await this.gameService.getRoomStatus(data.roomSlug);
-    client.emit('gameStatus', status);
+    try {
+      const status = await this.gameService.getRoomStatus(data.roomSlug);
+      client.emit('gameStatus', status);
+    } catch (error) {
+      throw new NotFoundException('Room not found');
+    }
+  }
+
+  async handleDisconnect(@ConnectedSocket() client: Socket) {
+    try {
+      const userId = client.user.id;
+      const rooms = Array.from(client.rooms);
+      for (const room of rooms) {
+        await this.gameService.removePlayerFromRoom(room, userId);
+        client.to(room).emit('userLeft', { userId });
+      }
+    } catch (error) {
+      this.logger.error(`Failed to remove user from room`, error);
+    }
   }
 }

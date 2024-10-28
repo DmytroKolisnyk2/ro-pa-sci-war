@@ -8,25 +8,29 @@ generator client {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  username       String   
-  createdRoom    Room?    @relation(fields: [createdRoomId], references: [id])
-  createdRoomId  Int?  
+  id            Int     @id @default(autoincrement())
+  username      String
+  createdRoom   Room?   @relation(fields: [createdRoomId], references: [id])
+  createdRoomId Int?
+
+  gameResults         GameResult[]
 }
 
 model Room {
-  id             Int      @id @default(autoincrement())
-  slug           String   @unique
+  id   Int    @id @default(autoincrement())
+  slug String @unique
 
-  users   User[]
+  users User[]
+  gameResults GameResult[]
 }
 
-// model Score {
-//   id             Int      @id @default(autoincrement())
-//   user           User     @relation(fields: [userId], references: [id])
-//   userId         Int
-//   room           Room     @relation(fields: [roomId], references: [id])
-//   roomId         Int
-//   score          Int
-//   createdAt      DateTime @default(now())
-// }
+model GameResult {
+  id       Int   @id @default(autoincrement())
+  winner   User? @relation(fields: [winnerId], references: [id])
+  winnerId Int?
+
+  room   Room @relation(fields: [roomId], references: [id])
+  roomId Int
+
+  isTie Boolean @default(false)
+}

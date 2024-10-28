@@ -34,7 +34,7 @@ export class GameService {
     if (connectedUsersCount !== gameConstants.PLAYERS_COUNT) {
       throw new WsException('Room is not full');
     }
-    
+
     await this.gameRepository.saveChoice(roomId, userId, choice);
 
     const choices = await this.gameRepository.getChoices(roomId);
@@ -44,8 +44,14 @@ export class GameService {
 
     if (choices.length === gameConstants.PLAYERS_COUNT) {
       const result = this.getGameResult(choices);
-      await this.gameRepository.resetChoices(roomId);
       data.result = result;
+
+      await this.gameRepository.resetChoices(roomId);
+
+      await this.roomService.saveToRoomGameResult(roomId, {
+        winnerId: result.winnerId,
+        isTie: result.isTie,
+      });
     }
 
     return data;
@@ -59,6 +65,11 @@ export class GameService {
     };
 
     return gameStatus;
+  }
+
+  async removePlayerFromRoom(roomId: string, userId: number): Promise<void> {
+    await this.gameRepository.resetUserChoices(roomId, userId);
+    await this.roomService.removeUserFromRoom(roomId, userId);
   }
 
   private getGameResult(choices: GameChoice[]): GameResult {
