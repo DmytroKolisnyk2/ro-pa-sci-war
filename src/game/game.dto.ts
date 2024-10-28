@@ -1,13 +1,13 @@
-import { IsString, IsEnum } from 'class-validator';
+import { IsEnum, IsUUID } from 'class-validator';
 import { GameSign } from './game.types';
 
 export class JoinRoomDto {
-  @IsString()
+  @IsUUID()
   roomSlug: string;
 }
 
 export class MakeChoiceDto {
-  @IsString()
+  @IsUUID()
   roomSlug: string;
 
   @IsEnum(GameSign)
@@ -15,6 +15,6 @@ export class MakeChoiceDto {
 }
 
 export class GetStatusDto {
-  @IsString()
+  @IsUUID()
   roomSlug: string;
 }

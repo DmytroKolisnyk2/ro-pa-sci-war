@@ -6,6 +6,8 @@ import {
   UseGuards,
   Request,
   UseFilters,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, JwtPayloadDto, LoginResponseDto } from './auth.dto';
@@ -41,6 +43,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Authenticate a user and return a JWT token' })
   @ApiResponse({
     status: 201,

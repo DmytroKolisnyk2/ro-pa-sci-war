@@ -14,7 +14,6 @@ import {
   ConnectedSocket,
   OnGatewayInit,
   OnGatewayDisconnect,
-  BaseWsExceptionFilter,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -36,6 +35,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
     this.logger.log('Gateway initialized');
   }
 
+  @UsePipes(ValidationPipe)
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: JoinRoomDto,
@@ -53,6 +53,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
   }
 
+  @UsePipes(ValidationPipe)
   @UseGuards(RoomMemberGuard)
   @SubscribeMessage('makeChoice')
   async handleMakeChoice(
@@ -70,7 +71,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
       throw new NotFoundException('Room not found or invalid choice');
     }
   }
-
+  
+  @UsePipes(ValidationPipe)
   @UseGuards(RoomMemberGuard)
   @SubscribeMessage('getStatus')
   async handleGetStatus(
